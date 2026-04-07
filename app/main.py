@@ -52,6 +52,8 @@ async def startup_event():
                 Manager(id=8, name="Айнель", sipnumber="241", online=True, missed=0, accepted_calls=0),
                 Manager(id=9, name="Аиша", sipnumber="275", online=True, missed=0, accepted_calls=0),
                 Manager(id=10, name="Балнур", sipnumber="777", online=True, missed=0, accepted_calls=0),
+                Manager(id=11, name="Тамерлан", sipnumber="999", online=True, missed=0, accepted_calls=0),
+                Manager(id=12, name="Санжар",   sipnumber="236",   online=True, missed=0, accepted_calls=0),
             ])
             await session.commit()
 
