@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AutoCall — Power Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #050816;
+      --bg-soft: #0b1228;
+      --panel: rgba(10, 16, 36, 0.72);
+      --panel-2: rgba(16, 23, 49, 0.78);
+      --line: rgba(255,255,255,0.10);
+      --line-soft: rgba(255,255,255,0.06);
+      --text: #eff4ff;
+      --muted: #9fb0d1;
+      --muted-2: #6f7f9d;
+      --green: #42f5b6;
+      --green-2: #00d9ff;
+      --blue: #6d8cff;
+      --violet: #9f67ff;
+      --yellow: #ffbe5c;
+      --red: #ff6685;
+      --shadow: 0 20px 60px rgba(0,0,0,0.35);
+      --radius-xl: 26px;
+      --radius-lg: 20px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --glass: blur(18px);
+      --hero-grad: linear-gradient(135deg, rgba(66,245,182,0.22), rgba(109,140,255,0.18) 42%, rgba(159,103,255,0.18) 100%);
+      --card-grad: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+      --ok-bg: rgba(66,245,182,0.14);
+      --warn-bg: rgba(255,190,92,0.14);
+      --danger-bg: rgba(255,102,133,0.14);
+      --info-bg: rgba(109,140,255,0.14);
+    }
+
+    body.light {
+      --bg: #edf3ff;
+      --bg-soft: #dde8ff;
+      --panel: rgba(255,255,255,0.80);
+      --panel-2: rgba(255,255,255,0.92);
+      --line: rgba(8, 18, 44, 0.10);
+      --line-soft: rgba(8, 18, 44, 0.06);
+      --text: #111b34;
+      --muted: #5d6c89;
+      --muted-2: #7f8dab;
+      --shadow: 0 24px 60px rgba(52, 78, 124, 0.14);
+      --hero-grad: linear-gradient(135deg, rgba(66,245,182,0.16), rgba(109,140,255,0.12) 42%, rgba(159,103,255,0.12) 100%);
+      --card-grad: linear-gradient(180deg, rgba(255,255,255,0.75), rgba(255,255,255,0.48));
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; }
+    body {
+      font-family: Inter, system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 20%, rgba(66,245,182,0.10), transparent 26%),
+        radial-gradient(circle at 85% 15%, rgba(109,140,255,0.16), transparent 28%),
+        radial-gradient(circle at 50% 80%, rgba(159,103,255,0.12), transparent 28%),
+        linear-gradient(180deg, var(--bg), var(--bg-soft));
+      overflow-x: hidden;
+      transition: background .35s ease, color .25s ease;
+    }
+
+    .bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .mesh,
+    .grid,
+    .noise,
+    .blob {
+      position: absolute;
+      inset: 0;
+    }
+
+    .grid {
+      background-image:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: radial-gradient(circle at center, black, transparent 92%);
+      opacity: .22;
+    }
+
+    body.light .grid {
+      background-image:
+        linear-gradient(rgba(10,16,36,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(10,16,36,0.06) 1px, transparent 1px);
+    }
+
+    .noise {
+      opacity: .07;
+      background-image: radial-gradient(rgba(255,255,255,.7) .7px, transparent .7px);
+      background-size: 12px 12px;
+      mix-blend-mode: soft-light;
+    }
+
+    .blob {
+      filter: blur(80px);
+      opacity: .6;
+      animation: drift 20s ease-in-out infinite;
+    }
+
+    .b1 {
+      width: 460px; height: 460px; left: -120px; top: -80px;
+      background: radial-gradient(circle, rgba(66,245,182,.22), transparent 70%);
+    }
+    .b2 {
+      width: 540px; height: 540px; right: -120px; top: 10px;
+      background: radial-gradient(circle, rgba(109,140,255,.22), transparent 68%);
+      animation-delay: -6s;
+    }
+    .b3 {
+      width: 420px; height: 420px; left: 32%; bottom: -140px;
+      background: radial-gradient(circle, rgba(159,103,255,.20), transparent 70%);
+      animation-delay: -11s;
+    }
+
+    @keyframes drift {
+      0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+      30% { transform: translate3d(26px, -30px, 0) scale(1.06); }
+      65% { transform: translate3d(-24px, 16px, 0) scale(.95); }
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 1540px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      width: 54px; height: 54px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      background: linear-gradient(135deg, rgba(66,245,182,0.90), rgba(0,217,255,0.88) 45%, rgba(159,103,255,0.86));
+      box-shadow: 0 16px 34px rgba(66,245,182,0.22), inset 0 1px 0 rgba(255,255,255,.35);
+    }
+
+    .brand-copy h1 {
+      font-size: 28px;
+      letter-spacing: -.03em;
+      font-weight: 800;
+    }
+
+    .brand-copy p {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .grad-text {
+      background: linear-gradient(90deg, var(--green), var(--green-2), var(--violet));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn, .pill {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 14px;
+      backdrop-filter: var(--glass);
+      -webkit-backdrop-filter: var(--glass);
+      box-shadow: var(--shadow);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--green);
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 14px currentColor;
+      animation: pulse 1.9s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(.72); opacity: .45; }
+    }
+
+    .btn {
+      padding: 11px 16px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: transform .22s ease, border-color .22s ease, background .22s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(66,245,182,0.30);
+      background: var(--panel-2);
+    }
+
+    .btn-icon {
+      display: inline-grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.06);
+    }
+
+    .hero {
+      position: relative;
+      border: 1px solid var(--line);
+      background: var(--hero-grad), var(--panel);
+      border-radius: 30px;
+      padding: 24px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      backdrop-filter: var(--glass);
+      -webkit-backdrop-filter: var(--glass);
+      margin-bottom: 22px;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent, rgba(255,255,255,.09), transparent);
+      transform: translateX(-100%);
+      animation: sheen 7s linear infinite;
+    }
+
+    @keyframes sheen {
+      to { transform: translateX(100%); }
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.3fr .7fr;
+      gap: 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero h2 {
+      font-size: 34px;
+      line-height: 1.02;
+      letter-spacing: -.04em;
+      max-width: 740px;
+    }
+
+    .hero p {
+      margin-top: 12px;
+      color: var(--muted);
+      max-width: 720px;
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .hero-mini {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      align-self: start;
+    }
+
+    .mini {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .mini span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      margin-bottom: 10px;
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .mini strong {
+      font-size: 24px;
+      letter-spacing: -.04em;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 300px minmax(0,1fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .sidebar,
+    .card {
+      background: var(--card-grad), var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      backdrop-filter: var(--glass);
+      -webkit-backdrop-filter: var(--glass);
+    }
+
+    .sidebar {
+      border-radius: 28px;
+      padding: 18px;
+      position: sticky;
+      top: 18px;
+    }
+
+    .company {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--line-soft);
+      margin-bottom: 16px;
+    }
+
+    .company-logo {
+      width: 52px; height: 52px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(66,245,182,.18), rgba(109,140,255,.20));
+      font-size: 22px;
+    }
+
+    .company h3 {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+    }
+
+    .company p {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .nav {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 13px 14px;
+      border-radius: 16px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      transition: .2s ease;
+      text-align: left;
+      width: 100%;
+    }
+
+    .nav-item:hover,
+    .nav-item.active {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(66,245,182,0.16);
+      transform: translateX(2px);
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .nav-ic {
+      width: 36px; height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.06);
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .nav-copy strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .nav-copy span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .badge {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 8px;
+    }
+
+    .balance {
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--line-soft);
+    }
+
+    .balance-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 12px;
+    }
+
+    .balance-top span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .balance-top strong {
+      font-size: 24px;
+      letter-spacing: -.04em;
+    }
+
+    .progress {
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .progress > i {
+      display: block;
+      height: 100%;
+      width: 62%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--green), var(--green-2), var(--violet));
+      box-shadow: 0 0 20px rgba(66,245,182,.24);
+      animation: stretch 4.6s ease-in-out infinite;
+    }
+
+    @keyframes stretch {
+      0%, 100% { width: 62%; }
+      50% { width: 67%; }
+    }
+
+    .balance small {
+      color: var(--muted-2);
+      font-size: 11px;
+    }
+
+    .content {
+      display: grid;
+      gap: 22px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 16px;
+    }
+
+    .card {
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      transition: transform .22s ease, border-color .22s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,0.16);
+    }
+
+    .stat {
+      padding: 20px;
+      position: relative;
+      min-height: 138px;
+      overflow: hidden;
+    }
+
+    .stat::after {
+      content: "";
+      position: absolute;
+      inset: auto -30px -30px auto;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      filter: blur(4px);
+      opacity: .14;
+    }
+
+    .stat.green::after { background: radial-gradient(circle, var(--green), transparent 70%); }
+    .stat.blue::after { background: radial-gradient(circle, var(--blue), transparent 70%); }
+    .stat.yellow::after { background: radial-gradient(circle, var(--yellow), transparent 70%); }
+    .stat.violet::after { background: radial-gradient(circle, var(--violet), transparent 70%); }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .eyebrow span {
+      font-size: 11px;
+      font-family: "JetBrains Mono", monospace;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .12em;
+    }
+
+    .chip {
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .stat-num {
+      font-size: 44px;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -.06em;
+    }
+
+    .stat-sub {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: minmax(0,1.15fr) minmax(320px,.85fr);
+      gap: 22px;
+    }
+
+    .head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .head-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .head-ic {
+      width: 38px; height: 38px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,0.06);
+      font-size: 18px;
+    }
+
+    .head h3 {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+    }
+
+    .head p {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .body {
+      padding: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 0 0 12px;
+    }
+
+    .search {
+      flex: 1;
+      min-width: 220px;
+      position: relative;
+    }
+
+    .search input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 12px 14px 12px 40px;
+      outline: none;
+      font: inherit;
+    }
+
+    .search input::placeholder { color: var(--muted-2); }
+    .search i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-style: normal;
+    }
+
+    .select {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      font: inherit;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+      max-height: 540px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .list::-webkit-scrollbar { width: 6px; }
+    .list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 999px; }
+
+    .manager {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      transition: .22s ease;
+    }
+
+    .manager:hover {
+      transform: translateX(2px);
+      border-color: rgba(66,245,182,0.20);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .avatar {
+      width: 46px; height: 46px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 15px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.14);
+    }
+
+    .avatar.online { background: linear-gradient(135deg, rgba(66,245,182,.22), rgba(0,217,255,.20)); color: var(--green); }
+    .avatar.offline { background: linear-gradient(135deg, rgba(255,102,133,.18), rgba(255,190,92,.12)); color: var(--red); }
+
+    .manager-main { min-width: 0; }
+    .manager-main h4 {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .manager-main p {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .status.on {
+      color: var(--green);
+      background: var(--ok-bg);
+      border: 1px solid rgba(66,245,182,.20);
+    }
+
+    .status.off {
+      color: var(--red);
+      background: var(--danger-bg);
+      border: 1px solid rgba(255,102,133,.18);
+    }
+
+    .status .s-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    .missed {
+      padding: 4px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+      background: var(--warn-bg);
+      color: var(--yellow);
+      border: 1px solid rgba(255,190,92,.18);
+    }
+
+    .toggle {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+
+    .toggle:hover {
+      transform: scale(1.04);
+      border-color: rgba(66,245,182,.20);
+    }
+
+    .queue {
+      display: grid;
+      gap: 10px;
+      max-height: 540px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .queue-item {
+      position: relative;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      overflow: hidden;
+    }
+
+    .queue-item::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      background: linear-gradient(180deg, var(--yellow), var(--red));
+    }
+
+    .queue-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .queue-id {
+      font-family: "JetBrains Mono", monospace;
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .attempt {
+      padding: 5px 9px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--yellow);
+      background: var(--warn-bg);
+      border: 1px solid rgba(255,190,92,.18);
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .phone {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.06);
+      margin-top: 12px;
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--yellow), var(--red));
+      transition: width .35s ease;
+    }
+
+    .logs-wrap {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) 310px;
+      gap: 22px;
+    }
+
+    .log-list {
+      display: grid;
+      gap: 10px;
+      max-height: 530px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .log {
+      display: grid;
+      grid-template-columns: auto auto auto 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      transition: .2s ease;
+    }
+
+    .log:hover {
+      background: rgba(255,255,255,0.06);
+    }
+
+    .log-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .log-dot.connected { background: var(--green); box-shadow: 0 0 12px rgba(66,245,182,.45); }
+    .log-dot.no_answer { background: var(--red); box-shadow: 0 0 12px rgba(255,102,133,.35); }
+    .log-dot.no_managers { background: var(--yellow); box-shadow: 0 0 12px rgba(255,190,92,.35); }
+
+    .mono {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+    }
+
+    .log-time,
+    .log-id,
+    .log-phone { color: var(--muted); }
+    .log-phone { color: var(--text); }
+
+    .tag {
+      padding: 6px 9px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+      border: 1px solid var(--line);
+    }
+
+    .tag.initial { background: rgba(255,255,255,0.05); color: var(--muted); }
+    .tag.autodial { background: var(--info-bg); color: var(--blue); }
+    .tag.connected { background: var(--ok-bg); color: var(--green); }
+    .tag.no_answer { background: var(--danger-bg); color: var(--red); }
+    .tag.no_managers { background: var(--warn-bg); color: var(--yellow); }
+
+    .side-metrics {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .metric {
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .metric span {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-family: "JetBrains Mono", monospace;
+      margin-bottom: 8px;
+    }
+
+    .metric strong {
+      font-size: 28px;
+      letter-spacing: -.05em;
+      display: block;
+    }
+
+    .metric p {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 6px;
+      line-height: 1.45;
+    }
+
+    .empty,
+    .loader {
+      display: grid;
+      place-items: center;
+      min-height: 180px;
+      text-align: center;
+      color: var(--muted);
+      border-radius: 20px;
+    }
+
+    .loader-ring {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.10);
+      border-top-color: var(--green);
+      animation: spin .8s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast-wrap {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 50;
+      display: grid;
+      gap: 10px;
+    }
+
+    .toast {
+      min-width: 220px;
+      max-width: 320px;
+      padding: 13px 15px;
+      border-radius: 14px;
+      background: rgba(10,16,36,0.92);
+      color: white;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      animation: toastIn .25s ease;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .toast.ok { border-color: rgba(66,245,182,.28); color: var(--green); }
+    .toast.err { border-color: rgba(255,102,133,.28); color: var(--red); }
+
+    @keyframes toastIn {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 0 4px 12px;
+    }
+
+    .footer .mono { color: var(--muted); }
+
+    @media (max-width: 1240px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .grid-2, .logs-wrap, .hero-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 980px) {
+      .stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .log { grid-template-columns: auto auto 1fr auto; }
+      .log-id, .log-phone { grid-column: span 1; }
+      .topbar { flex-direction: column; align-items: stretch; }
+      .actions { justify-content: flex-start; }
+    }
+
+    @media (max-width: 700px) {
+      .app { padding: 16px; }
+      .hero { padding: 18px; }
+      .hero h2 { font-size: 28px; }
+      .stats { grid-template-columns: 1fr; }
+      .manager { grid-template-columns: auto 1fr; }
+      .status, .toggle { grid-column: 2; justify-self: start; }
+      .log { grid-template-columns: auto 1fr; }
+      .footer { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg">
+    <div class="grid"></div>
+    <div class="noise"></div>
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+  </div>
+
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">📞</div>
+        <div class="brand-copy">
+          <h1>Auto<span class="grad-text">Call</span> Power</h1>
+          <p>Панель управления обзвоном · Bitrix24 + Sipuni</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <div class="pill"><span class="dot"></span>LIVE SYSTEM</div>
+        <button class="btn" id="themeBtn" type="button">
+          <span class="btn-icon">◐</span>
+          <span>Тема</span>
+        </button>
+        <button class="btn" id="refreshBtn" type="button">
+          <span class="btn-icon" id="refreshIcon">↻</span>
+          <span>Обновить</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <h2>Мощный дашборд для <span class="grad-text">автодозвона</span>, операторов и истории звонков в реальном времени</h2>
+          <p>Сделано в более дорогом визуальном стиле: стекло, градиенты, дарк / лайт режим, плавные анимации, быстрые фильтры и аккуратная структура, чтобы экран сразу выглядел как нормальный SaaS-продукт, а не просто таблица с данными.</p>
+        </div>
+
+        <div class="hero-mini">
+          <div class="mini">
+            <span>API</span>
+            <strong id="apiMode">—</strong>
+          </div>
+          <div class="mini">
+            <span>Обновление</span>
+            <strong>15s</strong>
+          </div>
+          <div class="mini">
+            <span>Режим</span>
+            <strong id="themeLabel">Dark</strong>
+          </div>
+          <div class="mini">
+            <span>Статус</span>
+            <strong class="grad-text">Online</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <div class="company">
+          <div class="company-logo">⚡</div>
+          <div>
+            <h3>AutoCall Control</h3>
+            <p>Smart routing · call monitoring</p>
+          </div>
+        </div>
+
+        <div class="nav">
+          <button class="nav-item active" type="button">
+            <div class="nav-left">
+              <div class="nav-ic">📊</div>
+              <div class="nav-copy"><strong>Дашборд</strong><span>Главные метрики</span></div>
+            </div>
+            <span class="badge">live</span>
+          </button>
+          <button class="nav-item" type="button">
+            <div class="nav-left">
+              <div class="nav-ic">👥</div>
+              <div class="nav-copy"><strong>Менеджеры</strong><span>Статусы и доступность</span></div>
+            </div>
+            <span class="badge" id="navManagers">0</span>
+          </button>
+          <button class="nav-item" type="button">
+            <div class="nav-left">
+              <div class="nav-ic">⏳</div>
+              <div class="nav-copy"><strong>Автодозвон</strong><span>Очередь лидов</span></div>
+            </div>
+            <span class="badge" id="navQueue">0</span>
+          </button>
+          <button class="nav-item" type="button">
+            <div class="nav-left">
+              <div class="nav-ic">📋</div>
+              <div class="nav-copy"><strong>История</strong><span>Логи и исходы звонков</span></div>
+            </div>
+            <span class="badge" id="navLogs">0</span>
+          </button>
+        </div>
+
+        <div class="balance">
+          <div class="balance-top">
+            <div>
+              <span>Остаток минут</span>
+              <strong>1 240</strong>
+            </div>
+            <span>62%</span>
+          </div>
+          <div class="progress"><i></i></div>
+          <small>Пример блока баланса. Можешь потом привязать к своему API.</small>
+        </div>
+      </aside>
+
+      <section class="content">
+        <section class="stats">
+          <article class="card stat green">
+            <div class="eyebrow"><span>На линии</span><div class="chip">live</div></div>
+            <div class="stat-num" id="s-on"><div class="loader-ring"></div></div>
+            <div class="stat-sub">активных менеджеров сейчас</div>
+          </article>
+
+          <article class="card stat blue">
+            <div class="eyebrow"><span>Всего менеджеров</span><div class="chip">team</div></div>
+            <div class="stat-num" id="s-total"><div class="loader-ring"></div></div>
+            <div class="stat-sub">доступно в системе</div>
+          </article>
+
+          <article class="card stat yellow">
+            <div class="eyebrow"><span>Автодозвон</span><div class="chip">queue</div></div>
+            <div class="stat-num" id="s-queue"><div class="loader-ring"></div></div>
+            <div class="stat-sub">лидов ожидают обработку</div>
+          </article>
+
+          <article class="card stat violet">
+            <div class="eyebrow"><span>История</span><div class="chip">logs</div></div>
+            <div class="stat-num" id="s-logs"><div class="loader-ring"></div></div>
+            <div class="stat-sub">звонков записано в истории</div>
+          </article>
+        </section>
+
+        <section class="grid-2">
+          <article class="card">
+            <div class="head">
+              <div class="head-left">
+                <div class="head-ic">👥</div>
+                <div>
+                  <h3>Менеджеры</h3>
+                  <p id="managerMeta">загрузка...</p>
+                </div>
+              </div>
+              <div class="badge" id="managerBadge">—</div>
+            </div>
+            <div class="body">
+              <div class="toolbar">
+                <div class="search">
+                  <i>⌕</i>
+                  <input id="managerSearch" type="text" placeholder="Поиск по имени или ext..." />
+                </div>
+                <select id="managerFilter" class="select">
+                  <option value="all">Все</option>
+                  <option value="online">Только онлайн</option>
+                  <option value="offline">Только офлайн</option>
+                </select>
+              </div>
+              <div class="list" id="managerList">
+                <div class="loader"><div><div class="loader-ring"></div>Загрузка менеджеров...</div></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="head">
+              <div class="head-left">
+                <div class="head-ic">⏳</div>
+                <div>
+                  <h3>Автодозвон</h3>
+                  <p id="queueMeta">очередь обзвона</p>
+                </div>
+              </div>
+              <div class="badge" id="queueBadge">—</div>
+            </div>
+            <div class="body">
+              <div class="queue" id="queueList">
+                <div class="loader"><div><div class="loader-ring"></div>Загрузка очереди...</div></div>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="logs-wrap">
+          <article class="card">
+            <div class="head">
+              <div class="head-left">
+                <div class="head-ic">📋</div>
+                <div>
+                  <h3>История звонков</h3>
+                  <p id="logsMeta">последние события системы</p>
+                </div>
+              </div>
+              <div class="badge" id="logsBadge">—</div>
+            </div>
+            <div class="body">
+              <div class="log-list" id="logList">
+                <div class="loader"><div><div class="loader-ring"></div>Загрузка логов...</div></div>
+              </div>
+            </div>
+          </article>
+
+          <aside class="card">
+            <div class="head">
+              <div class="head-left">
+                <div class="head-ic">⚙️</div>
+                <div>
+                  <h3>Быстрая аналитика</h3>
+                  <p>оперативная сводка</p>
+                </div>
+              </div>
+            </div>
+            <div class="side-metrics">
+              <div class="metric">
+                <span>Успешно соединено</span>
+                <strong id="mConnected">0</strong>
+                <p>Количество логов со статусом connected.</p>
+              </div>
+              <div class="metric">
+                <span>Не ответили</span>
+                <strong id="mNoAnswer">0</strong>
+                <p>Количество попыток без ответа.</p>
+              </div>
+              <div class="metric">
+                <span>Нет менеджеров</span>
+                <strong id="mNoManagers">0</strong>
+                <p>Ситуации, когда система не нашла свободного сотрудника.</p>
+              </div>
+              <div class="metric">
+                <span>Конверсия</span>
+                <strong id="mRate">0%</strong>
+                <p>Условная конверсия connected от общего числа логов на экране.</p>
+              </div>
+            </div>
+          </aside>
+        </section>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>AutoCall · premium realtime dashboard concept</span>
+      <span class="mono" id="apiLabel">API: —</span>
+    </footer>
+  </div>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <script>
+    const BASE = (location.protocol === 'file:' || location.origin === 'null')
+      ? 'http://127.0.0.1:8000'
+      : location.origin;
+
+    const state = {
+      managers: [],
+      queue: [],
+      logs: []
+    };
+
+    const els = {
+      apiLabel: document.getElementById('apiLabel'),
+      apiMode: document.getElementById('apiMode'),
+      sOn: document.getElementById('s-on'),
+      sTotal: document.getElementById('s-total'),
+      sQueue: document.getElementById('s-queue'),
+      sLogs: document.getElementById('s-logs'),
+      managerMeta: document.getElementById('managerMeta'),
+      managerBadge: document.getElementById('managerBadge'),
+      queueMeta: document.getElementById('queueMeta'),
+      queueBadge: document.getElementById('queueBadge'),
+      logsMeta: document.getElementById('logsMeta'),
+      logsBadge: document.getElementById('logsBadge'),
+      managerList: document.getElementById('managerList'),
+      queueList: document.getElementById('queueList'),
+      logList: document.getElementById('logList'),
+      managerSearch: document.getElementById('managerSearch'),
+      managerFilter: document.getElementById('managerFilter'),
+      themeBtn: document.getElementById('themeBtn'),
+      themeLabel: document.getElementById('themeLabel'),
+      refreshBtn: document.getElementById('refreshBtn'),
+      refreshIcon: document.getElementById('refreshIcon'),
+      navManagers: document.getElementById('navManagers'),
+      navQueue: document.getElementById('navQueue'),
+      navLogs: document.getElementById('navLogs'),
+      mConnected: document.getElementById('mConnected'),
+      mNoAnswer: document.getElementById('mNoAnswer'),
+      mNoManagers: document.getElementById('mNoManagers'),
+      mRate: document.getElementById('mRate')
+    };
+
+    els.apiLabel.textContent = 'API: ' + BASE;
+    els.apiMode.textContent = location.protocol === 'file:' ? 'local' : 'web';
+
+    function toast(message, type = 'ok') {
+      const div = document.createElement('div');
+      div.className = 'toast ' + type;
+      div.textContent = message;
+      document.getElementById('toastWrap').appendChild(div);
+      setTimeout(() => div.remove(), 3200);
+    }
+
+    function animateNumber(el, target) {
+      const end = Number(target) || 0;
+      const start = Number(el.dataset.value || 0);
+      const duration = 500;
+      const startTime = performance.now();
+
+      function frame(now) {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(start + (end - start) * eased);
+        el.textContent = current.toLocaleString('ru-RU');
+        if (progress < 1) requestAnimationFrame(frame);
+      }
+
+      el.dataset.value = end;
+      requestAnimationFrame(frame);
+    }
+
+    function setStats({ on, total, queue, logs }) {
+      animateNumber(els.sOn, on);
+      animateNumber(els.sTotal, total);
+      animateNumber(els.sQueue, queue);
+      animateNumber(els.sLogs, logs);
+      els.navManagers.textContent = String(total);
+      els.navQueue.textContent = String(queue);
+      els.navLogs.textContent = String(logs);
+    }
+
+    function formatTime(value, seconds = false) {
+      if (!value) return '—';
+      const date = new Date(value);
+      return date.toLocaleTimeString('ru-RU', seconds
+        ? { hour: '2-digit', minute: '2-digit', second: '2-digit' }
+        : { hour: '2-digit', minute: '2-digit' }
+      );
+    }
+
+    function initials(name = '') {
+      const clean = name.trim();
+      return clean ? clean[0].toUpperCase() : '•';
+    }
+
+    function emptyHTML(icon, text) {
+      return `<div class="empty"><div><div style="font-size:34px;margin-bottom:10px;opacity:.6">${icon}</div>${text}</div></div>`;
+    }
+
+    function renderManagers() {
+      const query = els.managerSearch.value.trim().toLowerCase();
+      const filter = els.managerFilter.value;
+
+      let list = [...state.managers];
+      if (filter === 'online') list = list.filter(m => m.online);
+      if (filter === 'offline') list = list.filter(m => !m.online);
+      if (query) {
+        list = list.filter(m =>
+          String(m.name || '').toLowerCase().includes(query) ||
+          String(m.sipnumber || '').toLowerCase().includes(query)
+        );
+      }
+
+      const online = state.managers.filter(m => m.online).length;
+      els.managerMeta.textContent = `${online} из ${state.managers.length} активны`;
+      els.managerBadge.textContent = `${state.managers.length} total`;
+
+      if (!list.length) {
+        els.managerList.innerHTML = emptyHTML('👤', 'Нет менеджеров по текущему фильтру');
+        return;
+      }
+
+      els.managerList.innerHTML = list.map(m => `
+        <div class="manager">
+          <div class="avatar ${m.online ? 'online' : 'offline'}">${initials(m.name)}</div>
+          <div class="manager-main">
+            <h4>
+              ${m.name || 'Без имени'}
+              ${m.missed > 0 ? `<span class="missed">${m.missed} пропущ.</span>` : ''}
+            </h4>
+            <p>ext. ${m.sipnumber ?? '—'}</p>
+          </div>
+          <div class="status ${m.online ? 'on' : 'off'}">
+            <span class="s-dot"></span>
+            ${m.online ? 'на линии' : 'не активен'}
+          </div>
+          <button class="toggle" onclick="toggleManager(${m.id}, ${m.online})">${m.online ? '⏸' : '▶'}</button>
+        </div>
+      `).join('');
+    }
+
+    function renderQueue() {
+      els.queueMeta.textContent = state.queue.length ? 'лиды в очереди на автодозвон' : 'очередь пустая';
+      els.queueBadge.textContent = `${state.queue.length} leads`;
+
+      if (!state.queue.length) {
+        els.queueList.innerHTML = emptyHTML('✅', 'Очередь пуста');
+        return;
+      }
+
+      els.queueList.innerHTML = state.queue.map(q => {
+        const attempts = Number(q.attempts || 0);
+        const progress = Math.min((attempts / 6) * 100, 100);
+        return `
+          <div class="queue-item">
+            <div class="queue-top">
+              <div class="queue-id">Лид #${q.lead_id}</div>
+              <div class="attempt">${attempts}/6</div>
+            </div>
+            <div class="phone">${q.phone || '—'}</div>
+            <div class="meta">
+              <span>следующий звонок: ${formatTime(q.next_call_time)}</span>
+              <span>попытка ${attempts}</span>
+            </div>
+            <div class="bar"><i style="width:${progress}%"></i></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderLogs() {
+      els.logsMeta.textContent = state.logs.length ? `последние ${state.logs.length} событий` : 'логов пока нет';
+      els.logsBadge.textContent = `${state.logs.length} rows`;
+
+      if (!state.logs.length) {
+        els.logList.innerHTML = emptyHTML('📭', 'Звонков ещё не было');
+        updateMetrics([]);
+        return;
+      }
+
+      const statusLabel = {
+        connected: 'Соединён',
+        no_answer: 'Не ответили',
+        no_managers: 'Нет менеджеров'
+      };
+
+      els.logList.innerHTML = state.logs.map(l => `
+        <div class="log">
+          <div class="log-dot ${l.status}"></div>
+          <div class="log-time mono">${formatTime(l.timestamp, true)}</div>
+          <div class="log-id mono">#${l.lead_id ?? '—'}</div>
+          <div class="log-phone mono">${l.phone || '—'}</div>
+          <div class="tag ${l.type || 'initial'}">${l.type === 'autodial' ? 'автодозвон' : 'новый'}</div>
+          <div class="tag ${l.status}">${statusLabel[l.status] || l.status || '—'}</div>
+        </div>
+      `).join('');
+
+      updateMetrics(state.logs);
+    }
+
+    function updateMetrics(logs) {
+      const connected = logs.filter(l => l.status === 'connected').length;
+      const noAnswer = logs.filter(l => l.status === 'no_answer').length;
+      const noManagers = logs.filter(l => l.status === 'no_managers').length;
+      const rate = logs.length ? Math.round((connected / logs.length) * 100) : 0;
+
+      animateNumber(els.mConnected, connected);
+      animateNumber(els.mNoAnswer, noAnswer);
+      animateNumber(els.mNoManagers, noManagers);
+      els.mRate.textContent = rate + '%';
+    }
+
+    async function loadManagers() {
+      try {
+        const res = await fetch(`${BASE}/managers`);
+        const data = await res.json();
+        state.managers = Array.isArray(data) ? data : [];
+      } catch (e) {
+        state.managers = [];
+        els.managerList.innerHTML = emptyHTML('⚠️', 'Сервер недоступен');
+      }
+      renderManagers();
+    }
+
+    async function loadLogsAndQueue() {
+      try {
+        const res = await fetch(`${BASE}/logs`);
+        const data = await res.json();
+        state.queue = Array.isArray(data.autodial_queue) ? data.autodial_queue : [];
+        state.logs = Array.isArray(data.logs) ? data.logs : [];
+
+        setStats({
+          on: state.managers.filter(m => m.online).length,
+          total: state.managers.length,
+          queue: state.queue.length,
+          logs: Number(data.total_logs ?? state.logs.length ?? 0)
+        });
+      } catch (e) {
+        state.queue = [];
+        state.logs = [];
+        els.queueList.innerHTML = emptyHTML('⚠️', 'Сервер недоступен');
+        els.logList.innerHTML = emptyHTML('⚠️', 'Сервер недоступен');
+      }
+      renderQueue();
+      renderLogs();
+    }
+
+    async function toggleManager(id, online) {
+      try {
+        const res = await fetch(`${BASE}/managers/${id}/${online ? 'offline' : 'online'}`, { method: 'POST' });
+        const data = await res.json();
+        toast(`${data.name}: ${online ? 'НЕ АКТИВЕН' : 'НА ЛИНИИ'}`, online ? 'err' : 'ok');
+        await loadAll();
+      } catch (e) {
+        toast('Ошибка подключения', 'err');
+      }
+    }
+
+    window.toggleManager = toggleManager;
+
+    async function loadAll() {
+      els.refreshIcon.style.transform = 'rotate(360deg)';
+      await loadManagers();
+      await loadLogsAndQueue();
+      setStats({
+        on: state.managers.filter(m => m.online).length,
+        total: state.managers.length,
+        queue: state.queue.length,
+        logs: state.logs.length
+      });
+      setTimeout(() => {
+        els.refreshIcon.style.transform = 'rotate(0deg)';
+      }, 400);
+    }
+
+    function applyTheme(theme) {
+      document.body.classList.toggle('light', theme === 'light');
+      localStorage.setItem('autocall-theme', theme);
+      els.themeLabel.textContent = theme === 'light' ? 'Light' : 'Dark';
+    }
+
+    els.themeBtn.addEventListener('click', () => {
+      const next = document.body.classList.contains('light') ? 'dark' : 'light';
+      applyTheme(next);
+    });
+
+    els.refreshBtn.addEventListener('click', () => {
+      loadAll();
+      toast('Данные обновлены');
+    });
+
+    els.managerSearch.addEventListener('input', renderManagers);
+    els.managerFilter.addEventListener('change', renderManagers);
+
+    applyTheme(localStorage.getItem('autocall-theme') || 'dark');
+    loadAll();
+    setInterval(loadAll, 15000);
+  </script>
+</body>
+</html>
