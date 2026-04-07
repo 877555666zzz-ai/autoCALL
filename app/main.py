@@ -66,7 +66,7 @@ async def startup_event():
 
 @app.get("/")
 async def root():
-    return FileResponse("static/index.html")
+    return FileResponse("static/dashboard.html")
 
 
 @app.get("/test/sipuni_call")
