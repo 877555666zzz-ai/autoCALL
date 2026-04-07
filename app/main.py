@@ -1,7 +1,6 @@
-# app/main.py
+from fastapi import FastAPI, BackgroundTasks, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi import FastAPI, BackgroundTasks, Body, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 import asyncio
 
 from sqlalchemy import select
@@ -23,14 +22,14 @@ async def check_whitelist(request: Request, call_next):
     # временно пропускаем всё, чтобы Bitrix мог стучаться снаружи
     return await call_next(request)
 
-    client_host = request.client.host
-    if client_host not in ALLOWED_IPS:
-        return JSONResponse(
-            status_code=403,
-            content={"error": "Access denied"}
-        )
-
-    return await call_next(request)
+    # Если потом захочешь включить whitelist, раскомментируй:
+    # client_host = request.client.host
+    # if client_host not in ALLOWED_IPS:
+    #     return JSONResponse(
+    #         status_code=403,
+    #         content={"error": "Access denied"}
+    #     )
+    # return await call_next(request)
 
 
 @app.on_event("startup")
@@ -40,14 +39,34 @@ async def startup_event():
     async with async_session_maker() as session:
         result = await session.execute(select(Manager))
         managers = result.scalars().all()
+
         if not managers:
             session.add_all([
-                Manager(id=11, name="Тамерлан", sipnumber="999", online=True, missed=0, accepted_calls=0),
-                Manager(id=12, name="Арсен",   sipnumber="236",   online=True, missed=0, accepted_calls=0),
+                Manager(
+                    id=11,
+                    name="Тамерлан",
+                    sipnumber="999",
+                    online=True,
+                    missed=0,
+                    accepted_calls=0,
+                ),
+                Manager(
+                    id=12,
+                    name="Арсен",
+                    sipnumber="236",
+                    online=True,
+                    missed=0,
+                    accepted_calls=0,
+                ),
             ])
             await session.commit()
 
     asyncio.create_task(autodial_worker())
+
+
+@app.get("/")
+async def root():
+    return FileResponse("static/index.html")
 
 
 @app.get("/test/sipuni_call")
@@ -59,6 +78,7 @@ async def test_sipuni_call(manager_id: int, client_phone: str):
             return {"error": "manager_not_found"}
 
         result = await make_outbound_call(mgr.sipnumber, client_phone)
+
         return {
             "manager": {
                 "id": mgr.id,
@@ -78,6 +98,7 @@ async def list_managers():
     async with async_session_maker() as session:
         result = await session.execute(select(Manager))
         managers = result.scalars().all()
+
         return [
             {
                 "id": m.id,
@@ -167,7 +188,7 @@ async def get_logs():
                 "lead_id": q.lead_id,
                 "phone": q.phone,
                 "attempts": q.attempts,
-                "next_call_time": q.next_call_time.isoformat(),
+                "next_call_time": q.next_call_time.isoformat() if q.next_call_time else None,
                 "state": q.state,
             }
             for q in queue
@@ -183,7 +204,7 @@ async def bitrix_lead_webhook(
     """Вебхук из Bitrix — новый лид (поддержка JSON и form-data)"""
     lead_id = None
 
-    # Пытаемся сначала прочитать как JSON (Swagger / ручные тесты)
+    # Сначала пытаемся прочитать JSON (Swagger / ручные тесты)
     try:
         body = await request.json()
     except Exception:
@@ -193,22 +214,25 @@ async def bitrix_lead_webhook(
         data = body.get("data") or {}
         fields = data.get("FIELDS") or {}
         lead_id_raw = fields.get("ID")
+
         if lead_id_raw:
             try:
                 lead_id = int(lead_id_raw)
-            except ValueError:
+            except (ValueError, TypeError):
                 lead_id = None
     else:
-        # Если это не JSON (Bitrix шлёт form-data)
+        # Если не JSON, значит скорее всего form-data от Bitrix
         form = await request.form()
-        # В Bitrix исходящем вебхуке обычно приходит так:
+
+        # Обычно приходит:
         # event=ONCRMLEADADD
         # data[FIELDS][ID]=123
         lead_id_raw = form.get("data[FIELDS][ID]") or form.get("FIELDS[ID]")
+
         if lead_id_raw:
             try:
                 lead_id = int(lead_id_raw)
-            except ValueError:
+            except (ValueError, TypeError):
                 lead_id = None
 
     if lead_id is None:
@@ -220,6 +244,7 @@ async def bitrix_lead_webhook(
 
         client_phone = ""
         phones = result.get("PHONE") or []
+
         if phones and isinstance(phones, list):
             client_phone = phones[0].get("VALUE", "")
 
