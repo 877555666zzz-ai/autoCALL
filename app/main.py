@@ -15,13 +15,13 @@ from .models import Manager, AutodialQueue, CallLog
 app = FastAPI(title="Autocall Bitrix24 + Sipuni")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-ALLOWED_IPS = ["127.0.0.1"]  # добавь сюда свои IP
+# ALLOWED_IPS = ["127.0.0.1"]  # временно не используем
 
 
 @app.middleware("http")
 async def check_whitelist(request: Request, call_next):
-    if request.url.path.startswith("/static"):
-        return await call_next(request)
+    # временно пропускаем всё, чтобы Bitrix мог стучаться снаружи
+    return await call_next(request)
 
     client_host = request.client.host
     if client_host not in ALLOWED_IPS:
