@@ -177,13 +177,19 @@ async def get_logs():
 
 @app.post("/bitrix/webhook/lead")
 async def bitrix_lead_webhook(
+    request: Request,
     background_tasks: BackgroundTasks,
-    body: dict = Body(...)
 ):
-    """Вебхук из Bitrix — новый лид"""
+    """Вебхук из Bitrix — новый лид (поддержка JSON и form-data)"""
     lead_id = None
 
-    if isinstance(body, dict):
+    # Пытаемся сначала прочитать как JSON (Swagger / ручные тесты)
+    try:
+        body = await request.json()
+    except Exception:
+        body = None
+
+    if isinstance(body, dict) and "data" in body:
         data = body.get("data") or {}
         fields = data.get("FIELDS") or {}
         lead_id_raw = fields.get("ID")
@@ -192,9 +198,21 @@ async def bitrix_lead_webhook(
                 lead_id = int(lead_id_raw)
             except ValueError:
                 lead_id = None
+    else:
+        # Если это не JSON (Bitrix шлёт form-data)
+        form = await request.form()
+        # В Bitrix исходящем вебхуке обычно приходит так:
+        # event=ONCRMLEADADD
+        # data[FIELDS][ID]=123
+        lead_id_raw = form.get("data[FIELDS][ID]") or form.get("FIELDS[ID]")
+        if lead_id_raw:
+            try:
+                lead_id = int(lead_id_raw)
+            except ValueError:
+                lead_id = None
 
     if lead_id is None:
-        return {"status": "error", "reason": "lead_id_not_found", "raw": body}
+        return {"status": "error", "reason": "lead_id_not_found_in_body"}
 
     async def process_lead_task(l_id: int):
         lead_data = await get_lead(l_id)
