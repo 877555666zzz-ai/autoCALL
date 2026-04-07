@@ -42,18 +42,8 @@ async def startup_event():
         managers = result.scalars().all()
         if not managers:
             session.add_all([
-                Manager(id=1, name="Люда", sipnumber="205", online=True, missed=0, accepted_calls=0),
-                Manager(id=2, name="Асель", sipnumber="210", online=True, missed=0, accepted_calls=0),
-                Manager(id=3, name="Дина", sipnumber="211", online=True, missed=0, accepted_calls=0),
-                Manager(id=4, name="Мария", sipnumber="212", online=True, missed=0, accepted_calls=0),
-                Manager(id=5, name="Зафар", sipnumber="218", online=True, missed=0, accepted_calls=0),
-                Manager(id=6, name="Наталья", sipnumber="237", online=True, missed=0, accepted_calls=0),
-                Manager(id=7, name="Луиза", sipnumber="238", online=True, missed=0, accepted_calls=0),
-                Manager(id=8, name="Айнель", sipnumber="241", online=True, missed=0, accepted_calls=0),
-                Manager(id=9, name="Аиша", sipnumber="275", online=True, missed=0, accepted_calls=0),
-                Manager(id=10, name="Балнур", sipnumber="777", online=True, missed=0, accepted_calls=0),
                 Manager(id=11, name="Тамерлан", sipnumber="999", online=True, missed=0, accepted_calls=0),
-                Manager(id=12, name="Санжар",   sipnumber="236",   online=True, missed=0, accepted_calls=0),
+                Manager(id=12, name="Арсен",   sipnumber="236",   online=True, missed=0, accepted_calls=0),
             ])
             await session.commit()
 
